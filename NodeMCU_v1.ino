@@ -18,11 +18,10 @@
 
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-#include <WiFiClient.h>
 #include <aREST.h>
 
-const char* ssid = "2C47 Hyperoptic 1Gbps Broadband";
-const char* password = "sypeyyrv";
+const char* ssid = "MalaS7";
+const char* password = "xmgi6546";
 
 // TCP server at port 80 will respond to HTTP requests
 WiFiServer server(80);
@@ -73,7 +72,7 @@ void setup(void)
   Serial.println("TCP server started");
   
   // Add service to MDNS-SD
-  //MDNS.addService("http", "tcp", 80);
+  MDNS.addService("http", "tcp", 80);
 }
 
 void loop(void)
@@ -87,11 +86,14 @@ void loop(void)
   while(!client.available()){
     delay(1);
   }
+  Serial.println("another one");
+  client.print("I has information");
   rest.handle(client);
   delay(1);
+  client.print("y u do dis");
+  Serial.println("another one1");
   if (power >= 500){
     power = 0;
-    Serial.println("another one");
+    Serial.println("another one2");
   }
 }
-
