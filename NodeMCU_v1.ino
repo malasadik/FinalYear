@@ -20,8 +20,8 @@
 #include <ESP8266mDNS.h>
 #include <aREST.h>
 
-const char* ssid = "MalaS7";
-const char* password = "xmgi6546";
+const char* ssid = "E27B Hyperoptic 1Gbps Broadband";
+const char* password = "gh2xbd6z";
 
 // TCP server at port 80 will respond to HTTP requests
 WiFiServer server(80);
@@ -41,7 +41,7 @@ void setup(void)
   WiFi.begin(ssid, password);
   Serial.println("");  
 
-  rest.variable("power",&power);
+  //rest.variable("power",&power);
   
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
@@ -77,23 +77,32 @@ void setup(void)
 
 void loop(void)
 {
-  power += 1;
+  //power += 1;
   // Handle REST calls
   WiFiClient client = server.available();
   if (!client) {
     return;
   }
+
+  unsigned long timeout = millis();
   while(!client.available()){
-    delay(1);
+    if(millis() - timeout > 100) {
+      Serial.println("Client timed out");
+      //client.stop();
+      return;
+    }
   }
+
+  
   Serial.println("another one");
-  client.print("I has information");
+  client.print("");
   rest.handle(client);
   delay(1);
-  client.print("y u do dis");
+  client.print("");
   Serial.println("another one1");
-  if (power >= 500){
-    power = 0;
-    Serial.println("another one2");
-  }
+  client.stop();
+  //if (power >= 500){
+  //  power = 0;
+  //  Serial.println("another one2");
+  //}
 }
