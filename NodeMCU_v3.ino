@@ -13,6 +13,7 @@ const int B = D1; //2
 const int C = D0; //1 example = Y5 is C(1) B(0) A(1) (1 + 0 + 4)
 
 int testCount = 0;
+int pwm_val = 0;
 float adc_resolution = 3.3/1024.0;
 float res_ratio = 11.0/50.0;
 
@@ -31,6 +32,7 @@ void setup() {
   analogWrite(led, 0);
   analogWrite(D4, 0);
   
+  WiFi.hostname("switch1");
   WiFiManager wifiManager;
   //wifiManager.resetSettings(); Use this if you mess up the AP
   //wifiManager.setTimeout(180);
@@ -38,7 +40,7 @@ void setup() {
   //----------------------------------------------------------------------------------------------------------------------
   Serial.println("WiFi connected..");
 
-  if (!MDNS.begin("switch1")) {//http://switch1.local
+  if (!MDNS.begin("switch2")) {//http://switch1.local
     Serial.println("Error setting up MDNS responder!");
     while(1) { 
       delay(1000);
@@ -52,9 +54,11 @@ void setup() {
   Serial.print(WiFi.localIP());
   Serial.println("/");
 
-  MDNS.addService("http", "tcp", 80);
+  MDNS.addService("esp", "tcp", 8080);
 
   server.on("/", root);
+  server.on("/sensor", getSensor);
+  server.on("/status", getStatus);
   server.on("/power", showPower);
   server.on("/pwm_full", LED_PWM_Full);
   server.on("/pwm_mid", LED_PWM_50);
@@ -64,38 +68,67 @@ void setup() {
 }
 
 void LED_PWM_Full(){
+  pwm_val = 1024;
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
   server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   server.send(200, "text/html", "Success");
-  analogWrite(led, 1024);
+  analogWrite(led, pwm_val);
   //delay(2000);
 }
 
 void LED_PWM_50(){
+  pwm_val = 512;
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
   server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   server.send(200, "text/plain", "Success");
-  analogWrite(led, 500);
+  analogWrite(led, pwm_val);
 }
 
 void LED_PWM_25(){
+  pwm_val = 256;
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
   server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   server.send(200, "text/plain", "Success");
-  analogWrite(led, 250);
+  analogWrite(led, pwm_val);
   //delay(2000);
 }
 
 void LED_PWM_Off(){
+  pwm_val = 0;
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
   server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   server.send(200, "text/plain", "Success");
-  analogWrite(led, 0);
+  analogWrite(led, pwm_val);
   //delay(2000);
+}
+
+void getSensor(){
+  digitalWrite(A, HIGH);
+  digitalWrite(B, LOW);
+  digitalWrite(C, HIGH);
+  delay(1);
+  String str = String(analogRead(A0));
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
+  server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  server.send(200, "text/plain", str);
+}
+
+void getStatus(){
+  int index = 0;
+  if (pwm_val == 256) index = 1;
+  else if (pwm_val == 512) index = 2;
+  else if (pwm_val == 1024) index = 3;
+  else index = 0;
+  String str = String(index) + " Success";
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.sendHeader("Access-Control-Allow-Methods", "POST,GET,OPTIONS");
+  server.sendHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  server.send(200, "text/plain", str);
 }
 
 float getVolts(){
